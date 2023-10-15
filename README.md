@@ -48,5 +48,5 @@ Além disso, a RotinaFácil inclui uma funcionalidade abrangente para o controle
    * Controllers: Controladores da API, responsáveis por receber requisições e enviar respostas.
    * Properties: Configurações de propriedade da API.  
 
-⚖️ Licença
+## ⚖️ Licença
 Este projeto é disponibilizado sob a licença MIT License. Essa licença permite o uso, a cópia, a modificação e a distribuição do código-fonte para fins não comerciais, desde que a atribuição seja feita ao autor original.
