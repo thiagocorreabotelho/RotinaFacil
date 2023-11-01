@@ -21,7 +21,14 @@ namespace RotinaFacil.Infra.Data.Repository
         /// <returns>Retorna a lista de pessoas.</returns>
         public async Task<IEnumerable<Pessoa>> ObterListaAsync()
         {
-            return await _applicationDbContext.Pessoa.ToListAsync();
+            try
+            {
+                return await _applicationDbContext.Pessoa.ToListAsync();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         /// <summary>
@@ -32,7 +39,14 @@ namespace RotinaFacil.Infra.Data.Repository
         /// <returns>Retorna uma pessoa única.</returns>
         public async Task<Pessoa> ObterPorIdAsync(int id)
         {
-            return await _applicationDbContext.Pessoa.FindAsync(id);
+            try
+            {
+                return await _applicationDbContext.Pessoa.FindAsync(id);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         /// <summary>
@@ -42,7 +56,14 @@ namespace RotinaFacil.Infra.Data.Repository
         /// <returns>Retorna objeto único da pessoa.</returns>
         public async Task<Pessoa> ObterPorNomeAsync(string nome)
         {
-            return await _applicationDbContext.Pessoa.FirstOrDefaultAsync(pessoa => pessoa.Nome == nome);
+            try
+            {
+                return await _applicationDbContext.Pessoa.FirstOrDefaultAsync(pessoa => pessoa.Nome == nome);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         /// <summary>
@@ -52,7 +73,15 @@ namespace RotinaFacil.Infra.Data.Repository
         /// <returns>Retorna o objeto único da pessoa.</returns>
         public async Task<Pessoa> ObterPorCpfAsync(string cpf)
         {
-            return await _applicationDbContext.Pessoa.FirstOrDefaultAsync(pessoa => pessoa.CPF == cpf);
+            try
+            {
+                return await _applicationDbContext.Pessoa.FirstOrDefaultAsync(pessoa => pessoa.CPF == cpf);
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
         }
 
         /// <summary>
@@ -62,8 +91,20 @@ namespace RotinaFacil.Infra.Data.Repository
         /// <returns>Retorna a pessoa cadastrado.</returns>
         public async Task<Pessoa> NovoAsync(Pessoa pessoa)
         {
-            _applicationDbContext.Add(pessoa);
-            await _applicationDbContext.SaveChangesAsync();
+            using (var transacao = await _applicationDbContext.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    _applicationDbContext.Add(pessoa);
+                    await _applicationDbContext.SaveChangesAsync();
+                    transacao.Commit();
+                }
+                catch (Exception)
+                {
+                    transacao.Rollback();
+                    throw;
+                }
+            }
             return pessoa;
         }
 
@@ -74,8 +115,20 @@ namespace RotinaFacil.Infra.Data.Repository
         /// <returns>Retorna objeto da pessoa alterado.</returns>
         public async Task<Pessoa> AlterarAsync(Pessoa pessoa)
         {
-            _applicationDbContext.Update(pessoa);
-            await _applicationDbContext.SaveChangesAsync();
+            using (var transacao = await _applicationDbContext.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    _applicationDbContext.Update(pessoa);
+                    await _applicationDbContext.SaveChangesAsync();
+                    transacao.Commit();
+                }
+                catch (Exception)
+                {
+                    transacao.Rollback();
+                    throw;
+                }
+            }
             return pessoa;
         }
 
@@ -88,8 +141,20 @@ namespace RotinaFacil.Infra.Data.Repository
         /// <returns></returns>
         public async Task<Pessoa> ExcluirAsync(Pessoa pessoa)
         {
-            _applicationDbContext.Remove(pessoa);
-            await _applicationDbContext.SaveChangesAsync();
+            using (var transacao = await _applicationDbContext.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    _applicationDbContext.Remove(pessoa);
+                    await _applicationDbContext.SaveChangesAsync();
+                    transacao.Commit();
+                }
+                catch (Exception)
+                {
+                    transacao.Rollback();
+                    throw;
+                }
+            }
             return null;
         }
     }

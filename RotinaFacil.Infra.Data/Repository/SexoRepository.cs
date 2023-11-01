@@ -21,8 +21,15 @@ namespace RotinaFacil.Infra.Data.Repository
         /// <returns>Retorna lista de sexos.</returns>
         public async Task<IEnumerable<Sexo>> ObterListaAsync()
         {
-            return await _applicationDbContext.Sexo.Where(sexo => sexo.Ativo == true)
-                .ToListAsync();
+            try
+            {
+                return await _applicationDbContext.Sexo.Where(sexo => sexo.Ativo == true)
+                    .ToListAsync();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         /// <summary>
@@ -32,7 +39,14 @@ namespace RotinaFacil.Infra.Data.Repository
         /// <returns>Retorna o registro único.</returns>
         public async Task<Sexo> ObterPorIdAsync(int id)
         {
-            return await _applicationDbContext.Sexo.FindAsync(id);
+            try
+            {
+                return await _applicationDbContext.Sexo.FindAsync(id);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         /// <summary>
@@ -52,8 +66,22 @@ namespace RotinaFacil.Infra.Data.Repository
         /// <returns>Retorna objeto do registro criado na base.</returns>
         public async Task<Sexo> NovoAsync(Sexo sexo)
         {
-            _applicationDbContext.Add(sexo);
-            await _applicationDbContext.SaveChangesAsync();
+            using (var transacao = await _applicationDbContext.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    _applicationDbContext.Add(sexo);
+                    await _applicationDbContext.SaveChangesAsync();
+                    transacao.Commit();
+                }
+                catch (Exception ex)
+                {
+                    transacao.Rollback();
+                    throw ex;
+                }
+            }
+
+
             return sexo;
         }
 
@@ -64,8 +92,20 @@ namespace RotinaFacil.Infra.Data.Repository
         /// <returns>Retorna o objeto alterado.</returns>
         public async Task<Sexo> AlterarAsync(Sexo sexo)
         {
-            _applicationDbContext.Update(sexo);
-            await _applicationDbContext.SaveChangesAsync();
+            using (var transacao = await _applicationDbContext.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    _applicationDbContext.Update(sexo);
+                    await _applicationDbContext.SaveChangesAsync();
+                    transacao.Commit();
+                }
+                catch (Exception)
+                {
+                    transacao.Rollback();
+                    throw;
+                }
+            }
             return sexo;
         }
 
@@ -86,7 +126,7 @@ namespace RotinaFacil.Infra.Data.Repository
             {
                 throw;
             }
-            
+
         }
     }
 }

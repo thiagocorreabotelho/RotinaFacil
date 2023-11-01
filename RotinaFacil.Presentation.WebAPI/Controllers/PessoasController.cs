@@ -14,6 +14,12 @@ namespace RotinaFacil.Presentation.WebAPI.Controllers
             _pessoasService = pessoasService;
         }
 
+        /// <summary>
+        /// Endpoint reponsável por listar todas as pessoas cadastradas ativas.
+        /// </summary>
+        /// <returns>Retorna lista de pessoas ativas.</returns>
+        [ProducesResponseType(typeof(List<PessoaDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<PessoaDTO>>> Get()
         {

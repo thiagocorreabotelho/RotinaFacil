@@ -34,8 +34,7 @@ namespace RotinaFacil.Application.Helpers
         /// <returns>Retorna a lista de erro.</returns>
         public void ValidarParametroId(int id)
         {
-
-            if (id == 0)
+                if (id == 0)
                 throw new Exception($"Id é inválido: {id}");
         }
 

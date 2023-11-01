@@ -4,6 +4,7 @@ using RotinaFacil.Application.Helpers;
 using RotinaFacil.Application.Interface;
 using RotinaFacil.Domain.Entitie;
 using RotinaFacil.Domain.Interface;
+using System;
 using System.Diagnostics;
 
 namespace RotinaFacil.Application.Service
@@ -25,8 +26,19 @@ namespace RotinaFacil.Application.Service
         /// <returns>Retorna uma lista de de sexo.</returns>
         public async Task<IEnumerable<SexoDTO>> ObterListaAsync()
         {
-            var listaSexo = await _iSexoRepository.ObterListaAsync();
-            return _iMapper.Map<IEnumerable<SexoDTO>>(listaSexo);
+            List<string> listaSexoDTO = new List<string>();
+            try
+            {
+                var listaSexo = await _iSexoRepository.ObterListaAsync();
+                return _iMapper.Map<IEnumerable<SexoDTO>>(listaSexo);
+            }
+            catch (Exception ex)
+            {
+                listaSexoDTO.Add($"Erro SQL: {ex.InnerException?.Message}");
+                ex.Data["Erros"] = listaSexoDTO;
+                throw ex;
+            }
+
         }
 
         /// <summary>
@@ -36,10 +48,29 @@ namespace RotinaFacil.Application.Service
         /// <returns>Retorna o objeto completo com todos os dados da base de dados.</returns>
         public async Task<SexoDTO> ObterPorIdAsync(int id)
         {
-            SexoHelper sexoHelper = new SexoHelper();
-            sexoHelper.ValidarParametroId(id);
-            var sexoPorId = await _iSexoRepository.ObterPorIdAsync(id);
-            return _iMapper.Map<SexoDTO>(sexoPorId);
+            List<string> listaSexoDTO = new List<string>();
+
+            try
+            {
+                SexoHelper sexoHelper = new SexoHelper();
+                sexoHelper.ValidarParametroId(id);
+                var sexoPorId = await _iSexoRepository.ObterPorIdAsync(id);
+                return _iMapper.Map<SexoDTO>(sexoPorId);
+            }
+            catch (Exception ex)
+            {
+                if (!string.IsNullOrEmpty(ex.Message))
+                {
+                    listaSexoDTO.Add($"Ocorreu um erro ao tentar consultar o cliente pelo código de identificação.");
+                }
+                else if (!string.IsNullOrEmpty(ex.InnerException.Message))
+                {
+                    listaSexoDTO.Add($"Ocorreu um erro na base de dados ao tentar consultar o cliente. Erro: {ex.InnerException.Message}");
+                }
+
+                ex.Data["Erros"] = listaSexoDTO;
+                throw ex;
+            }
         }
 
         /// <summary>
@@ -52,20 +83,38 @@ namespace RotinaFacil.Application.Service
         /// <returns>Retorna o sexo conforme o nome</returns>
         public async Task<SexoDTO> ObterPorNomeAsync(string nome, bool permiteValidacao = false)
         {
+
             List<string> listaSexoDTO = new List<string>();
             SexoHelper sexoHelper = new SexoHelper();
             Exception ex = new Exception();
 
-            sexoHelper.ValidarParametroNome(nome);
-            var sexoPorNome = await _iSexoRepository.ObterPorNomeAsync(nome);
-            if (sexoPorNome == null && permiteValidacao)
+            try
             {
-                listaSexoDTO.Add($"O sexo {nome} não foi encontrado.");
+                sexoHelper.ValidarParametroNome(nome);
+                var sexoPorNome = await _iSexoRepository.ObterPorNomeAsync(nome);
+                if (sexoPorNome == null && permiteValidacao)
+                {
+                    listaSexoDTO.Add($"O sexo {nome} não foi encontrado.");
+                    ex.Data["Erros"] = listaSexoDTO;
+                    throw ex;
+                }
+
+                return _iMapper.Map<SexoDTO>(sexoPorNome);
+            }
+            catch (Exception exception)
+            {
+                if (!string.IsNullOrEmpty(exception.Message))
+                {
+                    listaSexoDTO.Add($"Ocorreu um erro ao tentar consultar o cliente pelo nome.");
+                }
+                else if (!string.IsNullOrEmpty(ex.InnerException.Message))
+                {
+                    listaSexoDTO.Add($"Ocorreu um erro na base de dados ao tentar consultar o cliente. Erro: {ex.InnerException.Message}");
+                }
+
                 ex.Data["Erros"] = listaSexoDTO;
                 throw ex;
             }
-
-            return _iMapper.Map<SexoDTO>(sexoPorNome);
         }
 
         /// <summary>
@@ -88,10 +137,27 @@ namespace RotinaFacil.Application.Service
                 throw ex;
             }
 
-            sexoDto.Ativo = true;
-            var novoSexo = _iMapper.Map<Sexo>(sexoDto);
-            await _iSexoRepository.NovoAsync(novoSexo);
-            return sexoDto;
+            try
+            {
+                sexoDto.Ativo = true;
+                var novoSexo = _iMapper.Map<Sexo>(sexoDto);
+                await _iSexoRepository.NovoAsync(novoSexo);
+                return sexoDto;
+            }
+            catch (Exception exception)
+            {
+                if (!string.IsNullOrEmpty(exception.Message))
+                {
+                    listaSexoDTO.Add($"Ocorreu um erro ao tentar cadastrar o sexo erro: {exception.Message}.");
+                }
+                else if (!string.IsNullOrEmpty(ex.InnerException.Message))
+                {
+                    listaSexoDTO.Add($"Ocorreu um erro na base de dados na tentativa de cadastrar o sexo {sexoDto.Nome}. Erro: {ex.InnerException.Message}");
+                }
+
+                ex.Data["Erros"] = listaSexoDTO;
+                throw ex;
+            }
         }
 
         /// <summary>
@@ -121,11 +187,28 @@ namespace RotinaFacil.Application.Service
                 throw ex;
             }
 
-            sexoHelper.ValidarSexoDto(sexoDto);
+            try
+            {
+                sexoHelper.ValidarSexoDto(sexoDto);
+                var alterarSexo = _iMapper.Map<Sexo>(sexoDto);
+                await _iSexoRepository.AlterarAsync(alterarSexo);
+                return sexoDto;
+            }
+            catch (Exception exception)
+            {
+                if (!string.IsNullOrEmpty(exception.Message))
+                {
+                    listaSexoDTO.Add($"Ocorreu um erro ao tentar alterar o sexo erro: {exception.Message}.");
+                }
+                else if (!string.IsNullOrEmpty(ex.InnerException.Message))
+                {
+                    listaSexoDTO.Add($"Ocorreu um erro na base de dados na tentativa de alterar o sexo {sexoDto.Nome}. Erro: {ex.InnerException.Message}");
+                }
 
-            var alterarSexo = _iMapper.Map<Sexo>(sexoDto);
-            await _iSexoRepository.AlterarAsync(alterarSexo);
-            return sexoDto;
+                ex.Data["Erros"] = listaSexoDTO;
+                throw ex;
+            }
+
         }
 
         /// <summary>
@@ -165,7 +248,15 @@ namespace RotinaFacil.Application.Service
             }
             catch (Exception exception)
             {
-                listaSexoDTO.Add($"Erro SQL: {exception.InnerException?.Message}");
+                if (!string.IsNullOrEmpty(exception.Message))
+                {
+                    listaSexoDTO.Add($"Ocorreu um erro ao tentar inativar o sexo erro: {exception.Message}.");
+                }
+                else if (!string.IsNullOrEmpty(ex.InnerException.Message))
+                {
+                    listaSexoDTO.Add($"Ocorreu um erro na base de dados na tentativa de inativar o sexo {sexoDto.Nome}. Erro: {ex.InnerException.Message}");
+                }
+
                 ex.Data["Erros"] = listaSexoDTO;
                 throw ex;
             }
